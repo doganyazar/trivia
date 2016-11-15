@@ -1,7 +1,7 @@
 'use strict'
 
 const test = require('tape')
-const Game = require('../game.js').Game
+const Game = require('../lib/game.js')
 
 test('Test environment', function(t) {
     t.plan(1)

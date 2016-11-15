@@ -5,8 +5,12 @@
   "main": "index.js",
   "dependencies": {},
   "devDependencies": {
+    "debug": "^2.3.2",
     "eslint": "^3.10.1",
     "tape": "^4.6.2"
+  },
+  "engines": {
+    "node": ">= 6.0.0"
   },
   "scripts": {
     "test": "tape test/**/*.js"
