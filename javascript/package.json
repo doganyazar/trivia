@@ -1,0 +1,16 @@
+{
+  "name": "trivia",
+  "version": "1.0.0",
+  "description": "Spread love!",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "eslint": "^3.10.1",
+    "tape": "^4.6.2"
+  },
+  "scripts": {
+    "test": "tape test/**/*.js"
+  },
+  "author": "",
+  "license": "ISC"
+}
