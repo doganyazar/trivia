@@ -1,22 +1,24 @@
 exports = typeof window !== 'undefined' && window !== null ? window : global
 
-exports.Game = function() {
-    var players          = new Array()
-    var places           = new Array(6)
-    var purses           = new Array(6)
-    var inPenaltyBox     = new Array(6)
+const Game = function() {
+    this.WINNING_POINTS = 6
 
-    var popQuestions     = new Array()
-    var scienceQuestions = new Array()
-    var sportsQuestions  = new Array()
-    var rockQuestions    = new Array()
+    var players          = []
+    var places          = []
+    var purses          = []
+    var inPenaltyBox     = []
+
+    var popQuestions     = []
+    var scienceQuestions = []
+    var sportsQuestions  = []
+    var rockQuestions    = []
 
     var currentPlayer    = 0
     var isGettingOutOfPenaltyBox = false
 
-    var didPlayerWin = function(){
-        return !(purses[currentPlayer] == 6)
-    }
+    var didPlayerWin = () => !(purses[currentPlayer] == this.WINNING_POINTS)
+
+    this.getPurse = id => purses[id]
 
     var currentCategory = function(){
         if(places[currentPlayer] == 0)
@@ -170,6 +172,10 @@ exports.Game = function() {
     }
 }
 
+module.exports = {
+    Game
+}
+
 if (module === require.main) {
     var notAWinner = false
 
@@ -177,7 +183,6 @@ if (module === require.main) {
 
     game.add('Chet')
     game.add('Pat')
-    game.add('Sue')
 
     do {
         game.roll(Math.floor(Math.random() * 6) + 1)
