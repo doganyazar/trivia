@@ -1,177 +1,139 @@
 'use strict'
 const debug = require('debug')('game')
+const QUESTION_TYPES = ['Pop', 'Science', 'Sports', 'Rock']
+
+function print() {
+    console.log(...arguments) //eslint-disable-line no-console
+}
 
 class Game {
-    constructor() {
-        this.WINNING_POINTS = 6
+    constructor(players, winningPoints = 6, placeSize = 12) {
+        this.winningPoints = winningPoints
+        this.placeSize = placeSize
 
-        var players          = []
-        var places          = []
-        var purses          = []
-        var inPenaltyBox     = []
+        this._initGame()
+        this.addPlayers(players)
+        this.currentPlayerIndex = 0
+        this.currentPlayerName = this.players[this.currentPlayerIndex]
 
-        var popQuestions     = []
-        var scienceQuestions = []
-        var sportsQuestions  = []
-        var rockQuestions    = []
+        debug(`Game initialized with ${players}, ${winningPoints}, ${placeSize}`)
+    }
 
-        var currentPlayer    = 0
-        var isGettingOutOfPenaltyBox = false
+    addPlayers(newPlayers) {
+        const currentNumberOfPlayers = this.players.length
+        this.players.push(...newPlayers)
 
-        this.getPurse = id => purses[id]
+        newPlayers.forEach((player, index) => {
+            index += currentNumberOfPlayers
+            this.places[index] = 0
+            this.purses[index] = 0
+            this.inPenaltyBox[index] = false
 
-        var didPlayerWin = () => !(purses[currentPlayer] == this.WINNING_POINTS)
+            print(`${player} is added!`)
+        })
+        print(`There are ${this.players.length} players in the game!`)
+    }
 
-        var currentCategory = function(){
-            if(places[currentPlayer] == 0)
-                return 'Pop'
-            if(places[currentPlayer] == 4)
-                return 'Pop'
-            if(places[currentPlayer] == 8)
-                return 'Pop'
-            if(places[currentPlayer] == 1)
-                return 'Science'
-            if(places[currentPlayer] == 5)
-                return 'Science'
-            if(places[currentPlayer] == 9)
-                return 'Science'
-            if(places[currentPlayer] == 2)
-                return 'Sports'
-            if(places[currentPlayer] == 6)
-                return 'Sports'
-            if(places[currentPlayer] == 10)
-                return 'Sports'
-            return 'Rock'
+    _initGame() {
+        this._prepareQuestions()
+        this.players = []
+        this.places = []
+        this.purses = []
+        this.inPenaltyBox = []
+    }
+
+    _prepareQuestions() {
+        this.questions = new Map()
+        QUESTION_TYPES.forEach(type => {
+            let qs = []
+            for(let i = 0; i < 50; i++){
+                qs.push(`${type} Question ${i}`)
+            }
+            this.questions.set(type, qs)
+        })
+    }
+
+    getQuestion(category){
+        return this.questions.get(category).shift()
+    }
+
+    currentCategory(place) {
+        return QUESTION_TYPES[place % QUESTION_TYPES.length]
+    }
+
+    getPurse(playerIndex) {
+        return this.purses[playerIndex]
+    }
+
+    play(roll){
+        if (this.players.length < 2) {
+            throw new Error('At least 2 players required!')
         }
 
-        this.createRockQuestion = function(index){
-            return 'Rock Question '+index
-        }
+        print(`${this.currentPlayerName} have rolled ${roll}`)
 
-        for(var i = 0; i < 50; i++){
-            popQuestions.push('Pop Question '+i)
-            scienceQuestions.push('Science Question '+i)
-            sportsQuestions.push('Sports Question '+i)
-            rockQuestions.push(this.createRockQuestion(i))
-        }
-
-        this.isPlayable = function(howManyPlayers){
-            return howManyPlayers >= 2
-        }
-
-        this.add = function(playerName){
-            players.push(playerName)
-            places[this.howManyPlayers() - 1] = 0
-            purses[this.howManyPlayers() - 1] = 0
-            inPenaltyBox[this.howManyPlayers() - 1] = false
-
-            debug(playerName + ' was added')
-            debug('They are player number ' + players.length)
-
-            return true
-        }
-
-        this.howManyPlayers = function(){
-            return players.length
-        }
-
-
-        var askQuestion = function(){
-            if(currentCategory() == 'Pop')
-                debug(popQuestions.shift())
-            if(currentCategory() == 'Science')
-                debug(scienceQuestions.shift())
-            if(currentCategory() == 'Sports')
-                debug(sportsQuestions.shift())
-            if(currentCategory() == 'Rock')
-                debug(rockQuestions.shift())
-        }
-
-        this.roll = function(roll){
-            debug(players[currentPlayer] + ' is the current player')
-            debug('They have rolled a ' + roll)
-
-            if(inPenaltyBox[currentPlayer]){
-                if(roll % 2 != 0){
-                    isGettingOutOfPenaltyBox = true
-
-                    debug(players[currentPlayer] + ' is getting out of the penalty box')
-                    places[currentPlayer] = places[currentPlayer] + roll
-                    if(places[currentPlayer] > 11){
-                        places[currentPlayer] = places[currentPlayer] - 12
-                    }
-
-                    debug(players[currentPlayer] + '\'s new location is ' + places[currentPlayer])
-                    debug('The category is ' + currentCategory())
-                    askQuestion()
-                }else{
-                    debug(players[currentPlayer] + ' is not getting out of the penalty box')
-                    isGettingOutOfPenaltyBox = false
-                }
-            }else{
-
-                places[currentPlayer] = places[currentPlayer] + roll
-                if(places[currentPlayer] > 11){
-                    places[currentPlayer] = places[currentPlayer] - 12
-                }
-
-                debug(players[currentPlayer] + '\'s new location is ' + places[currentPlayer])
-                debug('The category is ' + currentCategory())
-                askQuestion()
+        if (this.inPenaltyBox[this.currentPlayerIndex]){
+            if (roll % 2 != 0) {
+                print(`${this.currentPlayerName} is getting out of the penalty box`)
+                this.inPenaltyBox[this.currentPlayerIndex] = false
+            } else {
+                print(`${this.currentPlayerName} is not getting out of the penalty box`)
+                return
             }
         }
 
-        this.wasCorrectlyAnswered = function(){
-            if(inPenaltyBox[currentPlayer]){
-                if(isGettingOutOfPenaltyBox){
-                    debug('Answer was correct!!!!')
-                    purses[currentPlayer] += 1
-                    debug(players[currentPlayer] + ' now has ' +
-                        purses[currentPlayer]  + ' Gold Coins.')
-
-                    let winner = didPlayerWin()
-                    currentPlayer += 1
-                    if(currentPlayer == players.length)
-                        currentPlayer = 0
-
-                    return winner
-                }else{
-                    currentPlayer += 1
-                    if(currentPlayer == players.length)
-                        currentPlayer = 0
-                    return true
-                }
-
-
-
-            }else{
-
-                debug('Answer was correct!!!!')
-
-                purses[currentPlayer] += 1
-                debug(players[currentPlayer] + ' now has ' +
-                      purses[currentPlayer]  + ' Gold Coins.')
-
-                let winner = didPlayerWin()
-
-                currentPlayer += 1
-                if(currentPlayer == players.length)
-                    currentPlayer = 0
-
-                return winner
-            }
+        this.places[this.currentPlayerIndex] += roll
+        if(this.places[this.currentPlayerIndex] >= this.placeSize){
+            this.places[this.currentPlayerIndex] -= this.placeSize
         }
 
-        this.wrongAnswer = function(){
-            debug('Question was incorrectly answered')
-            debug(players[currentPlayer] + ' was sent to the penalty box')
-            inPenaltyBox[currentPlayer] = true
+        print(`${this.currentPlayerName}'s new location is ${this.places[this.currentPlayerIndex]}`)
+        const category = this.currentCategory(this._getCurrentPlace())
+        print(`The category is ${category}`)
+        print(this.getQuestion(category))
+    }
 
-            currentPlayer += 1
-            if(currentPlayer == players.length)
-                currentPlayer = 0
+    checkGameOver() {
+        return this.purses[this.currentPlayerIndex] == this.winningPoints
+    }
+
+    correctAnswer() {
+        if(!this.inPenaltyBox[this.currentPlayerIndex]){
+            print('Answer was correct!!!!')
+            this.purses[this.currentPlayerIndex] += 1
+            print(`${this.currentPlayerName} now has ${this.purses[this.currentPlayerIndex]} Gold Coins`)
+        }
+
+        if (this.checkGameOver()) {
+            print(`Game over! ${this.currentPlayerName} won!`)
             return true
         }
+
+        this._next()
+        return false
+    }
+
+    wrongAnswer() {
+        print('Question was incorrectly answered')
+        print(`${this.currentPlayerName} was sent to the penalty box`)
+        this.inPenaltyBox[this.currentPlayerIndex] = true
+
+        this._next()
+        return false
+    }
+
+    _next() {
+        this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length
+        this.currentPlayerName = this.players[this.currentPlayerIndex]
+    }
+
+    // returns the place of the current player
+    _getCurrentPlace() {
+        return this.places[this.currentPlayerIndex]
+    }
+
+    static dice() {
+        return Math.floor(Math.random() * 6)
     }
 }
 
